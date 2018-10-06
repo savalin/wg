@@ -37,7 +37,10 @@ wg.Add(
     func(ctx context.Context) error {
         // some logic
         return nil
-    }        
+    },     
+    
+    // Add more if you need
+    // ...
 )
 
 wg.Start()
