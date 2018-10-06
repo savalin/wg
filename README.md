@@ -21,7 +21,7 @@ import "github.com/savalin/waitgroup"
 
 // ...
 
-wg := wg.New()
+var wg = wg.New()
 
 // optional 
 wg.WithContext(ctx)
@@ -46,7 +46,7 @@ wg.Start()
 ### Error handling
 #### stop on error
 ```go
-wg := wg.New()
+var wg = wg.New()
 
 // add some gouroutines to be executed
 // ...
@@ -63,7 +63,7 @@ err = wg.
 
 #### execute all goroutines and collect errors
 ```go
-wg := wg.New()
+var wg = wg.New()
 
 // add some gouroutines to be executed
 // ...
@@ -81,11 +81,9 @@ errs = wg.
 ### Timeout
 #### if you have a context
 ```go
-var ( 
-    wg = wg.New()
-    ctx, cancel = context.WithTimeout(context.TODO(), time.Second)
-)
+var wg = wg.New()
 
+// context timeout will be applied for all goroutines
 wg.WithContext(ctx)
 
 // add some gouroutines to be executed
@@ -97,7 +95,7 @@ wg.Start()
 
 #### if you don't have a context
 ```go
-wg := wg.New()
+var wg = wg.New()
 
 // add some gouroutines to be executed
 // ...
@@ -110,7 +108,7 @@ wg.
 
 ### Reusage
 ```go
-wg := wg.New()
+var wg = wg.New()
 
 // add some gouroutines to be executed
 // ...
