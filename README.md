@@ -11,9 +11,16 @@ Enhanced go wait group implementation.
 
 *If you don't need at least one of them please use [sync.WaitGroup](https://golang.org/pkg/sync/#WaitGroup) from the standard library.
 
+## Installation
+`go get -v github.com/savalin/waitgroup`
+
 ## Usage
 ### General
 ```go
+import "github.com/savalin/waitgroup"
+
+// ...
+
 wg := wg.New()
 
 // optional 
