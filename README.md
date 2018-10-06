@@ -1,4 +1,4 @@
-[![Build Status](https://api.travis-ci.org/savalin/wg.svg)](http://travis-ci.org/savalin/wg) [![GoDoc](https://godoc.org/github.com/savalin/wg?status.svg)](http://godoc.org/github.com/savalin/wg)
+[![Build Status](https://api.travis-ci.com/savalin/wg.svg)](http://travis-ci.com/savalin/wg) [![GoDoc](https://godoc.org/github.com/savalin/wg?status.svg)](http://godoc.org/github.com/savalin/wg)
 
 # wg (WaitGroup)
 Enhanced go wait group implementation.
