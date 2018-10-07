@@ -208,15 +208,48 @@ func Test_WaitGroup_StopOnErrorPanic(t *testing.T) {
 	}
 }
 
-// TestWaitGroupStopOnError tests WaitGroup_ with StopOnError set to false
+// TestWaitGroupStopOnError tests WaitGroup_ with StopOnError set to false (by default)
 // and with failing task.
-func TestWaitGroupStopOnError(t *testing.T) {
+func Test_WaitGroup_StopOnErrorTurnedOff(t *testing.T) {
 	var wg waitGroup
-	wg.Add(fastFunc)
-	wg.Add(errorFunc)
-	wg.Add(fastFunc)
-	wg.SetStopOnError(false).
-		Start()
+	wg.Add(
+		fastFunc,
+		errorFunc,
+		fastFunc,
+		slowFunc,
+		slowFunc,
+		slowFunc,
+		slowFunc,
+		slowFunc,
+		slowFunc,
+		slowFunc,
+		slowFunc,
+		slowFunc,
+		slowFunc,
+		slowFunc,
+		slowFunc,
+		slowFunc,
+		slowFunc,
+		slowFunc,
+		slowFunc,
+		slowFunc,
+		slowFunc,
+		slowFunc,
+		slowFunc,
+		slowFunc,
+		slowFunc,
+		slowFunc,
+		slowFunc,
+		slowFunc,
+		errorFunc,
+	)
+
+	wg.Start()
+
+	errs := wg.GetAllErrors()
+	if len(errs) != 2 {
+		t.Error("wrong errors number")
+	}
 }
 
 // Test_WaitGroup__NoLeak tests for goroutines leaks
