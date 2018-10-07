@@ -4,17 +4,16 @@ import (
 	"context"
 	"fmt"
 	"runtime"
-	"sync"
 	"time"
 )
 
 // waitGroup enhanced wait group struct
 type waitGroup struct {
-	waitGroupStatus
 	ctx      context.Context
 	receiver chan WaitgroupFunc
 	sender   chan WaitgroupFunc
 
+	status      int
 	errors      []error
 	stopOnError bool
 
@@ -22,11 +21,6 @@ type waitGroup struct {
 	capacity    uint32
 	length      int
 	timeout     *time.Duration
-}
-
-type waitGroupStatus struct {
-	status     int
-	statusLock sync.RWMutex
 }
 
 // WithContext make wait group work with context timeout and Done
@@ -230,18 +224,13 @@ func (wg *waitGroup) setStatus(status int) {
 		return
 	}
 
-	wg.statusLock.Lock()
 	wg.status = status
-	wg.statusLock.Unlock()
 }
 
 func (wg *waitGroup) checkStatus(status int) bool {
 	if status < statusIdle || status > statusError {
 		return false
 	}
-
-	wg.statusLock.RLock()
-	defer wg.statusLock.RUnlock()
 
 	return wg.status == status
 }
