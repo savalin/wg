@@ -133,29 +133,6 @@ func Test_WaitGroup_Success(t *testing.T) {
 	}
 }
 
-// Test_WaitGroup_Success_WithCapacity test for success case with capacity
-func Test_WaitGroup_Success_WithCapacity(t *testing.T) {
-	var wg waitGroup
-
-	wg.Add(
-		fastFunc,
-		fastFunc,
-		fastFunc,
-		fastFunc,
-		slowFunc,
-		slowFunc,
-	)
-	wg.SetCapacity(2)
-
-	if errs := wg.SetStopOnError(true).Start().GetAllErrors(); len(errs) != 0 {
-		t.Errorf("WaitGroup result should be 'success'! But got errors %v", errs)
-	}
-
-	if wg.status != statusSuccess {
-		t.Error("WaitGroup result should be 'success'!")
-	}
-}
-
 // Test_WaitGroup_Cancel_Success test for cancel case
 func Test_WaitGroup_Cancel_Success(t *testing.T) {
 	var wg waitGroup
@@ -183,37 +160,6 @@ func Test_WaitGroup_Cancel_Success(t *testing.T) {
 
 	if wg.status != statusCancelled {
 		t.Error("WaitGroup result should be 'canelled'!")
-	}
-}
-
-// Test_WaitGroup_CancelWithCapacity_Success test for cancel case with capacity
-func Test_WaitGroup_CancelWithCapacity_Success(t *testing.T) {
-	var wg waitGroup
-
-	wg.Add(
-		fastFunc,
-		fastFunc,
-		fastFunc,
-		fastFunc,
-		slowFunc,
-		slowFunc,
-	)
-	wg.SetCapacity(2)
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	go func() {
-		time.Sleep(5 * time.Microsecond)
-		cancel()
-	}()
-
-	if errs := wg.WithContext(ctx).SetStopOnError(true).Start().GetAllErrors(); len(errs) != 0 {
-		t.Errorf("WaitGroup result should be 'success'! But got errors %v", errs)
-	}
-
-	if wg.status != statusCancelled {
-		t.Error("WaitGroup result should be 'success'!")
 	}
 }
 

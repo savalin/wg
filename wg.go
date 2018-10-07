@@ -9,18 +9,17 @@ import (
 
 // waitGroup enhanced wait group struct
 type waitGroup struct {
-	ctx      context.Context
-	receiver chan WaitgroupFunc
-	sender   chan WaitgroupFunc
+	ctx     context.Context
 
 	status      int
 	errors      []error
 	stopOnError bool
 
-	stackBuffer []WaitgroupFunc
-	capacity    uint32
-	length      int
-	timeout     *time.Duration
+	jobsBuf chan WaitgroupFunc
+	jobs     []WaitgroupFunc
+	capacity uint32
+	length   int
+	timeout  *time.Duration
 }
 
 // WithContext make wait group work with context timeout and Done
@@ -31,7 +30,7 @@ func (wg *waitGroup) WithContext(ctx context.Context) WaitGroup {
 
 // Add adds new task in waitgroup
 func (wg *waitGroup) Add(f ...WaitgroupFunc) WaitGroup {
-	wg.stackBuffer = append(wg.stackBuffer, f...)
+	wg.jobs = append(wg.jobs, f...)
 	return wg
 }
 
@@ -44,14 +43,6 @@ func (wg *waitGroup) SetTimeout(t time.Duration) WaitGroup {
 // SetStopOnError make wait group stops if any task returns error
 func (wg *waitGroup) SetStopOnError(b bool) WaitGroup {
 	wg.stopOnError = b
-	return wg
-}
-
-// SetCapacity defines tasks channel capacity
-func (wg *waitGroup) SetCapacity(c int) WaitGroup {
-	if c >= 0 {
-		wg.capacity = uint32(c)
-	}
 	return wg
 }
 
@@ -70,7 +61,6 @@ func (wg *waitGroup) Start() WaitGroup {
 	var (
 		failed = make(chan error, wg.length)
 		done   = make(chan struct{}, wg.length)
-		wgDone = make(chan struct{})
 
 		cancel    context.CancelFunc
 		startTime = time.Now()
@@ -85,23 +75,12 @@ func (wg *waitGroup) Start() WaitGroup {
 	wg.ctx, cancel = context.WithTimeout(wg.ctx, timeout)
 	defer cancel()
 
-	go func() {
-		for f := range wg.sender {
-			select {
-			case wg.receiver <- f:
-				// successfully sent a func to the execution queue
-			case <-wgDone:
-				return
-			}
-		}
-	}()
-
 ForLoop:
 	for wg.length > 0 {
 		select {
 
 		// If we have functions in queue to be ran
-		case f := <-wg.receiver:
+		case f := <-wg.jobsBuf:
 			go func(f WaitgroupFunc, failed chan<- error, done chan<- struct{}) {
 				if wg.stopOnError {
 					wg.do(f, failed, done, true)
@@ -136,15 +115,9 @@ ForLoop:
 		}
 	}
 
-	close(wgDone)
-	close(wg.sender)
+	close(wg.jobsBuf)
 
 	return wg
-}
-
-// GetCapacity defines tasks channel capacity
-func (wg *waitGroup) GetCapacity() int {
-	return int(wg.capacity)
 }
 
 // GetLastError returns last error that caught by execution process
@@ -162,9 +135,9 @@ func (wg *waitGroup) GetAllErrors() []error {
 
 // Reset performs cleanup task queue and reset state
 func (wg *waitGroup) Reset() WaitGroup {
-	wg.stackBuffer = []WaitgroupFunc{}
-	wg.receiver = nil
-	wg.sender = nil
+	wg.jobs = []WaitgroupFunc{}
+	wg.jobsBuf = nil
+	//wg.sender = nil
 	wg.timeout = nil
 	wg.stopOnError = false
 	wg.setStatus(statusIdle)
@@ -181,16 +154,17 @@ func (wg *waitGroup) init() {
 		wg.ctx = context.Background()
 	}
 
-	wg.length = len(wg.stackBuffer)
-	cap := wg.length
-	if c := wg.GetCapacity(); c > 0 {
-		cap = c
-	}
+	wg.length = len(wg.jobs)
+	//cap := wg.length
+	//if c := wg.GetCapacity(); c > 0 {
+	//	cap = c
+	//}
 
-	wg.receiver = make(chan WaitgroupFunc, cap)
-	wg.sender = make(chan WaitgroupFunc, wg.length)
-	for _, f := range wg.stackBuffer {
-		wg.sender <- f
+	wg.jobsBuf = make(chan WaitgroupFunc, wg.length)
+	//wg.sender = make(chan WaitgroupFunc, wg.length)
+	for _, f := range wg.jobs {
+		//wg.sender <- f
+		wg.jobsBuf <- f
 	}
 }
 
