@@ -181,7 +181,7 @@ func Test_WaitGroup_Cancel_Success(t *testing.T) {
 		t.Errorf("WaitGroup result should be 'success'! But got errors %v", errs)
 	}
 
-	if wg.status != statusCaneled {
+	if wg.status != statusCancelled {
 		t.Error("WaitGroup result should be 'canelled'!")
 	}
 }
@@ -212,7 +212,7 @@ func Test_WaitGroup_CancelWithCapacity_Success(t *testing.T) {
 		t.Errorf("WaitGroup result should be 'success'! But got errors %v", errs)
 	}
 
-	if wg.status != statusCaneled {
+	if wg.status != statusCancelled {
 		t.Error("WaitGroup result should be 'success'!")
 	}
 }

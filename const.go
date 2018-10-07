@@ -9,8 +9,8 @@ const (
 	statusSuccess
 	// statusTimeout means that job was broken by timeout
 	statusTimeout
-	// statusCaneled means that job was broken by context.CancelFunc call
-	statusCaneled
+	// statusCancelled means that job was broken by context.CancelFunc call
+	statusCancelled
 	// statusError means that job was broken by error in one task (if stopOnError is true)
 	statusError
 

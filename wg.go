@@ -130,7 +130,7 @@ func (wg *waitGroup) Start() WaitGroup {
 				// If context deadline exceeded
 			case <-wg.ctx.Done():
 				if wg.ctx.Err().Error() == context.Canceled.Error() {
-					wg.setStatus(statusCaneled)
+					wg.setStatus(statusCancelled)
 				} else if deadlineTime, ok := wg.ctx.Deadline(); ok {
 					wg.errors = append(wg.errors, ErrorTimeout(deadlineTime.Sub(startTime)))
 					wg.setStatus(statusTimeout)
