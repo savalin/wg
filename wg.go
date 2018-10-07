@@ -69,79 +69,81 @@ func (wg *waitGroup) Start() WaitGroup {
 
 	wg.init()
 
-	if wg.length > 0 {
-		var (
-			failed = make(chan error, wg.length)
-			done   = make(chan struct{}, wg.length)
-			wgDone = make(chan struct{})
+	if wg.length < 0 {
+		return wg
+	}
 
-			cancel    context.CancelFunc
-			startTime = time.Now()
-			timeout   = defaultMaxTimeout
-		)
+	var (
+		failed = make(chan error, wg.length)
+		done   = make(chan struct{}, wg.length)
+		wgDone = make(chan struct{})
 
-		if wg.timeout != nil && *wg.timeout != 0 {
-			startTime = time.Now()
-			timeout = *wg.timeout
+		cancel    context.CancelFunc
+		startTime = time.Now()
+		timeout   = defaultMaxTimeout
+	)
+
+	if wg.timeout != nil && *wg.timeout != 0 {
+		startTime = time.Now()
+		timeout = *wg.timeout
+	}
+
+	wg.ctx, cancel = context.WithTimeout(wg.ctx, timeout)
+	defer cancel()
+
+	go func() {
+		for f := range wg.sender {
+			select {
+			case wg.receiver <- f:
+				// successfully sent a func to the execution queue
+			case <-wgDone:
+				return
+			}
 		}
+	}()
 
-		wg.ctx, cancel = context.WithTimeout(wg.ctx, timeout)
-		defer cancel()
+ForLoop:
+	for wg.length > 0 {
+		select {
 
-		go func() {
-			for f := range wg.sender {
-				select {
-				case wg.receiver <- f:
-					// successfully sent a func to the execution queue
-				case <-wgDone:
+		// If we have functions in queue to be ran
+		case f := <-wg.receiver:
+			go func(f WaitgroupFunc, failed chan<- error, done chan<- struct{}) {
+				if wg.stopOnError {
+					wg.do(f, failed, done, true)
 					return
 				}
-			}
-		}()
+				wg.do(f, failed, done, false)
 
-	ForLoop:
-		for wg.length > 0 {
-			select {
+			}(f, failed, done)
 
-			// If we have functions in queue to be ran
-			case f := <-wg.receiver:
-				go func(f WaitgroupFunc, failed chan<- error, done chan<- struct{}) {
-					if wg.stopOnError {
-						wg.do(f, failed, done, true)
-						return
-					}
-					wg.do(f, failed, done, false)
-
-				}(f, failed, done)
-
-				// If we got en error returned from some goroutine
-			case err := <-failed:
-				wg.errors = append(wg.errors, err)
-				wg.length--
-				wg.setStatus(statusError)
-				if wg.stopOnError {
-					break ForLoop
-				}
-
-				// If all working goroutines are successfully finished
-			case <-done:
-				wg.length--
-
-				// If context deadline exceeded
-			case <-wg.ctx.Done():
-				if wg.ctx.Err().Error() == context.Canceled.Error() {
-					wg.setStatus(statusCancelled)
-				} else if deadlineTime, ok := wg.ctx.Deadline(); ok {
-					wg.errors = append(wg.errors, ErrorTimeout(deadlineTime.Sub(startTime)))
-					wg.setStatus(statusTimeout)
-				}
+			// If we got en error returned from some goroutine
+		case err := <-failed:
+			wg.errors = append(wg.errors, err)
+			wg.length--
+			wg.setStatus(statusError)
+			if wg.stopOnError {
 				break ForLoop
 			}
-		}
 
-		close(wgDone)
-		close(wg.sender)
+			// If all working goroutines are successfully finished
+		case <-done:
+			wg.length--
+
+			// If context deadline exceeded
+		case <-wg.ctx.Done():
+			if wg.ctx.Err().Error() == context.Canceled.Error() {
+				wg.setStatus(statusCancelled)
+			} else if deadlineTime, ok := wg.ctx.Deadline(); ok {
+				wg.errors = append(wg.errors, ErrorTimeout(deadlineTime.Sub(startTime)))
+				wg.setStatus(statusTimeout)
+			}
+			break ForLoop
+		}
 	}
+
+	close(wgDone)
+	close(wg.sender)
 
 	return wg
 }
