@@ -1,1 +1,1 @@
-module github.com/savalin/waitgroup
+module github.com/savalin/wg
