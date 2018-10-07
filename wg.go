@@ -63,7 +63,7 @@ func (wg *waitGroup) Start() WaitGroup {
 
 	wg.init()
 
-	if wg.length < 0 {
+	if wg.length < 1 {
 		return wg
 	}
 
