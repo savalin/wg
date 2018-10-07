@@ -17,7 +17,7 @@ Enhanced go wait group implementation.
 ## Usage
 ### General
 ```go
-import "github.com/savalin/waitgroup"
+import "github.com/savalin/wg"
 
 // ...
 
