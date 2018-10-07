@@ -9,13 +9,13 @@ import (
 
 // waitGroup enhanced wait group struct
 type waitGroup struct {
-	ctx     context.Context
+	ctx context.Context
 
 	status      int
 	errors      []error
 	stopOnError bool
 
-	jobsBuf chan WaitgroupFunc
+	jobsBuf  chan WaitgroupFunc
 	jobs     []WaitgroupFunc
 	capacity uint32
 	length   int
@@ -137,7 +137,6 @@ func (wg *waitGroup) GetAllErrors() []error {
 func (wg *waitGroup) Reset() WaitGroup {
 	wg.jobs = []WaitgroupFunc{}
 	wg.jobsBuf = nil
-	//wg.sender = nil
 	wg.timeout = nil
 	wg.stopOnError = false
 	wg.setStatus(statusIdle)
@@ -155,15 +154,9 @@ func (wg *waitGroup) init() {
 	}
 
 	wg.length = len(wg.jobs)
-	//cap := wg.length
-	//if c := wg.GetCapacity(); c > 0 {
-	//	cap = c
-	//}
-
 	wg.jobsBuf = make(chan WaitgroupFunc, wg.length)
-	//wg.sender = make(chan WaitgroupFunc, wg.length)
+
 	for _, f := range wg.jobs {
-		//wg.sender <- f
 		wg.jobsBuf <- f
 	}
 }

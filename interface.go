@@ -29,15 +29,8 @@ type WaitGroup interface {
 	// *must be called before Start()
 	SetStopOnError(flag bool) WaitGroup
 
-	// SetCapacity defines tasks channel capacity
-	// *must be called before Start()
-	SetCapacity(c int) WaitGroup
-
 	// Start runs tasks in separate goroutines
 	Start() WaitGroup
-
-	// GetCapacity defines tasks channel capacity
-	GetCapacity() int
 
 	// GetLastError returns last error that caught by execution process
 	GetLastError() error
